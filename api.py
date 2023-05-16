@@ -6,7 +6,6 @@ import pandas as pd
 # 1) execute : uvicorn api:app --reload.
 # 2) execute : run streamlit main.py.
 
-
 # Colonnes de la table before.
 columns_features_before_takeoff=[
     'MONTH', 
@@ -31,8 +30,7 @@ columns_features_after_takeoff=[
     'DISTANCE',
     'DEP_DELAY'
 ]
-                                    
-# ======================================================================================================================>
+                        
 
 # Initialisation de l'app FastAPI/connexion BDD.
 app = FastAPI()
@@ -46,7 +44,7 @@ cnx = mysql.connector.connect(
 )
 cursor = cnx.cursor()   
 
-# ======================================================================================================================>
+# ==================================================== REQUETES SQL ==================================================================>
 
 # Fonction permettant d'insérer les données.
 def insert_data_to_database(data, table1, table2, columns_features, y_pred="oui", connexion=cnx, cursor=cursor):
@@ -63,7 +61,8 @@ def insert_data_to_database(data, table1, table2, columns_features, y_pred="oui"
         connexion.commit()
     except Exception as e:
         print(e)
-
+        
+# ========================================================================>
 
 # Fonction pour récupérer les données depuis la base de données MySQL.
 def get_data_from_database(table1, table2, cursor=cursor):
@@ -73,8 +72,16 @@ def get_data_from_database(table1, table2, cursor=cursor):
     data2 = cursor.fetchall()
     return data1, data2
 
-# ================================================== @ROUTES ======================================================================>
+# ========================================================================>
 
+# Fonction pour supprimer les données depuis la base de données MySQL.
+def delete_data_from_database(liste, connexion=cnx):
+    cursor = connexion.cursor()
+    for i in liste:
+        cursor.execute(f"DELETE FROM {i}")
+    connexion.commit()
+    
+# ================================================== @ROUTES ======================================================================>
 
 # Route pour envoyer des données via une requête POST (before).
 @app.post("/data/post/before")
@@ -87,6 +94,8 @@ async def send_data(data:dict):
         )
     return {"message": "Données insérées avec succès"}
 
+# ========================================================================>
+
 # Route pour envoyer des données via une requête POST (after).
 @app.post("/data/post/after")
 async def send_data(data:dict):
@@ -98,6 +107,8 @@ async def send_data(data:dict):
     )
     return {"message": "Données insérées avec succès"}
 
+# ========================================================================>
+
 # Route pour récupérer les données via une requête GET (before).
 @app.get("/data/get/before")
 async def get_data():
@@ -106,6 +117,8 @@ async def get_data():
         table2="prediction_before_takeoff"
     )
     return {"data": data}
+
+# ========================================================================>
 
 # Route pour récupérer les données via une requête GET (after).
 @app.get("/data/get/after")
@@ -116,3 +129,14 @@ async def get_data():
     )
     return {"data": data}
 
+# ========================================================================>
+
+# Fonction pour supprimer toutes les données.
+@app.delete("/data/delete")
+async def delete_data():
+    delete_data_from_database(
+        liste=["prediction_after_takeoff", "prediction_before_takeoff", "before_takeoff", "after_takeoff"]
+    )
+    return "Données supprimées avec succès."
+
+# ========================================================================>

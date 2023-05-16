@@ -1,5 +1,6 @@
 import mysql.connector
 from fastapi import FastAPI
+import pandas as pd 
 
 # Pour lancer l'application et l'API
 # 1) execute : uvicorn api:app --reload.
@@ -30,8 +31,7 @@ columns_features_after_takeoff=[
     'DISTANCE',
     'DEP_DELAY'
 ]
-
-                                       
+                                    
 # ======================================================================================================================>
 
 # Initialisation de l'app FastAPI/connexion BDD.
@@ -41,7 +41,7 @@ cnx = mysql.connector.connect(
     password="Ounissi69800", 
     host="chemsdineserver.mysql.database.azure.com", 
     port=3306, 
-    database="avion_retard", 
+    database="retard_avion", 
     ssl_disabled=False
 )
 cursor = cnx.cursor()   
@@ -49,31 +49,70 @@ cursor = cnx.cursor()
 # ======================================================================================================================>
 
 # Fonction permettant d'insérer les données.
-def insert_data_to_database(data, y_pred="oui", connexion=cnx, cursor=cursor):
+def insert_data_to_database(data, table1, table2, columns_features, y_pred="oui", connexion=cnx, cursor=cursor):
     try:
         value_features = list(data.values()) 
-        if len(value_features) == 8:
-            columns_features = columns_features_before_takeoff
-            table_name_1 = "before_takeoff"
-            table_name_2 = "prediction_before_takeoff"
-        else:
-            columns_features = columns_features_after_takeoff
-            table_name_1 = "after_takeoff"
-            table_name_2 = "prediction_after_takeoff"
-        table1_sql = f"INSERT INTO {table_name_1} ({', '.join(columns_features)}) VALUES ({', '.join(['%s' for _ in range(len(columns_features))])})"
+        table1_sql = f"INSERT INTO {table1} ({', '.join(columns_features)}) VALUES ({', '.join(['%s' for _ in range(len(columns_features))])})"
         cursor.execute(table1_sql, value_features)
         inserted_id = cursor.lastrowid
         table2_columns = ["id_fk", "y_pred"]
         table2_values = [inserted_id, y_pred]
-        table2_sql = f"INSERT INTO {table_name_2} ({', '.join(table2_columns)}) VALUES ({', '.join(['%s' for _ in range(len(table2_columns))])})"
+        table2_sql = f"INSERT INTO {table2} ({', '.join(table2_columns)}) VALUES ({', '.join(['%s' for _ in range(len(table2_columns))])})"
         cursor.execute(table2_sql, table2_values)
         print("Données insérées avec succès.")
         connexion.commit()
     except Exception as e:
         print(e)
 
-# Route pour envoyer des données via une requête POST.
-@app.post("/data/post")
+
+# Fonction pour récupérer les données depuis la base de données MySQL.
+def get_data_from_database(table1, table2, cursor=cursor):
+    cursor.execute(f"SELECT * FROM {table1}")
+    data1 = cursor.fetchall()
+    cursor.execute(f"SELECT * FROM {table2}")
+    data2 = cursor.fetchall()
+    return data1, data2
+
+# ================================================== @ROUTES ======================================================================>
+
+
+# Route pour envoyer des données via une requête POST (before).
+@app.post("/data/post/before")
 async def send_data(data:dict):
-    insert_data_to_database(data=data)
+    insert_data_to_database(
+        data=data, 
+        table1="before_takeoff", 
+        table2="prediction_before_takeoff",
+        columns_features=columns_features_before_takeoff
+        )
     return {"message": "Données insérées avec succès"}
+
+# Route pour envoyer des données via une requête POST (after).
+@app.post("/data/post/after")
+async def send_data(data:dict):
+    insert_data_to_database(
+        data=data, 
+        table1="after_takeoff", 
+        table2="prediction_after_takeoff",
+        columns_features=columns_features_after_takeoff
+    )
+    return {"message": "Données insérées avec succès"}
+
+# Route pour récupérer les données via une requête GET (before).
+@app.get("/data/get/before")
+async def get_data():
+    data = get_data_from_database(
+        table1="before_takeoff", 
+        table2="prediction_before_takeoff"
+    )
+    return {"data": data}
+
+# Route pour récupérer les données via une requête GET (after).
+@app.get("/data/get/after")
+async def get_data():
+    data = get_data_from_database(
+        table1="after_takeoff", 
+        table2="prediction_after_takeoff"
+    )
+    return {"data": data}
+

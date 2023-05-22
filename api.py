@@ -44,17 +44,21 @@ cnx = mysql.connector.connect(
 )
 cursor = cnx.cursor()   
 
-# ==================================================== REQUETES SQL ==================================================================>
+# ========================================================== REQUETES SQL ==================================================================>
 
 # Fonction permettant d'insérer les données.
-def insert_data_to_database(data, table1, table2, columns_features, y_pred="oui", connexion=cnx, cursor=cursor):
+def insert_data_to_database(data, table1, table2, columns_features, connexion=cnx, cursor=cursor):
     try:
         value_features = list(data.values()) 
+        del value_features[-1]
         table1_sql = f"INSERT INTO {table1} ({', '.join(columns_features)}) VALUES ({', '.join(['%s' for _ in range(len(columns_features))])})"
         cursor.execute(table1_sql, value_features)
         inserted_id = cursor.lastrowid
         table2_columns = ["id_fk", "y_pred"]
-        table2_values = [inserted_id, y_pred]
+        if data["Prediction"] == "0":
+            table2_values = [inserted_id, "Non"]
+        else:
+            table2_values = [inserted_id, "Oui"]
         table2_sql = f"INSERT INTO {table2} ({', '.join(table2_columns)}) VALUES ({', '.join(['%s' for _ in range(len(table2_columns))])})"
         cursor.execute(table2_sql, table2_values)
         print("Données insérées avec succès.")
@@ -81,7 +85,7 @@ def delete_data_from_database(liste, connexion=cnx):
         cursor.execute(f"DELETE FROM {i}")
     connexion.commit()
     
-# ================================================== @ROUTES ======================================================================>
+# ============================================================= @ROUTES ======================================================================>
 
 # Route pour envoyer des données via une requête POST (before).
 @app.post("/data/post/before")

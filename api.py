@@ -139,7 +139,12 @@ async def get_data():
 @app.delete("/data/delete")
 async def delete_data():
     delete_data_from_database(
-        liste=["prediction_after_takeoff", "prediction_before_takeoff", "before_takeoff", "after_takeoff"]
+        liste=[
+            "prediction_after_takeoff", 
+            "prediction_before_takeoff", 
+            "before_takeoff", 
+            "after_takeoff"
+        ]
     )
     return "Données supprimées avec succès."
 

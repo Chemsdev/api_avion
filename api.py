@@ -53,7 +53,7 @@ def insert_data_to_database(data, table1, table2, columns_features, connexion=cn
         cursor.execute(table1_sql, value_features)
         inserted_id = cursor.lastrowid
         table2_columns = ["id_fk", "y_pred"]
-        if data["Prediction"] == 0:
+        if data["Prediction"] == 1:
             table2_values = [inserted_id, "en retard"]
         else:
             table2_values = [inserted_id, "à l'heure"]

@@ -14,7 +14,6 @@ columns_features_before_takeoff=[
     'CRS_DEP_TIME',
     'CRS_ARR_TIME',
     'CRS_ELAPSED_TIME',
-    'CARRIER',
     'DISTANCE'
 ]
 
@@ -26,7 +25,6 @@ columns_features_after_takeoff=[
     'CRS_DEP_TIME',
     'CRS_ARR_TIME',
     'CRS_ELAPSED_TIME',
-    'CARRIER',
     'DISTANCE',
     'DEP_DELAY'
 ]

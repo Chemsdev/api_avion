@@ -54,9 +54,9 @@ def insert_data_to_database(data, table1, table2, columns_features, connexion=cn
         inserted_id = cursor.lastrowid
         table2_columns = ["id_fk", "y_pred"]
         if data["Prediction"] == "0":
-            table2_values = [inserted_id, "Non"]
+            table2_values = [inserted_id, "en retard"]
         else:
-            table2_values = [inserted_id, "Oui"]
+            table2_values = [inserted_id, "à l'heure"]
         table2_sql = f"INSERT INTO {table2} ({', '.join(table2_columns)}) VALUES ({', '.join(['%s' for _ in range(len(table2_columns))])})"
         cursor.execute(table2_sql, table2_values)
         print("Données insérées avec succès.")
